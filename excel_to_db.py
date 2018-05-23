@@ -135,6 +135,16 @@ def insert_values(table_name, cursor, sheet):
     except sqlite3.ProgrammingError as error:
         print("ERROR: ", error)
         sys.exit(1)
+    all_rows = list(sheet.rows)
+    placeholder = ", ".join('?' * sheet.max_column)
+    for row in all_rows[1:]:
+        try:
+            cursor.execute(
+                "insert into {} values ({})".
+                format(table_name, placeholder), [cell.value for cell in row])
+        except sqlite3.OperationalError:
+            pprint.pprint([cell.value for cell in row])
+            sys.exit(1)
 
 
 def create_table(headings, table_name):
