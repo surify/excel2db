@@ -117,17 +117,24 @@ def insert_values(table_name, cursor, sheet):
     """
     inserts values from row 2 to last row into database
     """
-    all_rows = list(sheet.rows)
+    all_rows_values = []
+    for row in list(sheet.rows):
+        all_rows_values.append([])
+        for cell in row:
+            all_rows_values[-1].append(cell.value)
+
     placeholder = ", ".join('?' * sheet.max_column)
     # inserting row by row
-    for row in all_rows[1:]:
-        try:
-            cursor.execute(
-                "insert into {} values ({})".
-                format(table_name, placeholder), [cell.value for cell in row])
-        except sqlite3.OperationalError as error:
-            print(error)
-            sys.exit(1)
+    try:
+        cursor.executemany(
+            "insert into {} values ({})".
+            format(table_name, placeholder), all_rows_values[1:])
+    except sqlite3.OperationalError as error:
+        print("ERROR: ", error)
+        sys.exit(1)
+    except sqlite3.ProgrammingError as error:
+        print("ERROR: ", error)
+        sys.exit(1)
 
 
 def create_table(headings, table_name):
